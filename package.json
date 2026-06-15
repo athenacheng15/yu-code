@@ -1,0 +1,21 @@
+{
+	"name": "yu-code",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"dev:server": "bun --filter @yu-code/server dev",
+		"start:server": "bun --filter @yu-code/server start",
+		"dev:cli": "bun run --cwd apps/cli dev",
+		"start:cli": "bun run --cwd apps/cli start",
+		"test": "bun test",
+		"typecheck": "bunx tsc --build"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5.9.3"
+	}
+}

@@ -1,0 +1,11 @@
+import { describe, expect, test } from "bun:test";
+import { app } from "./index.js";
+
+describe("server", () => {
+  test("responds to health checks", async () => {
+    const response = await app.request("/health");
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({ ok: true });
+  });
+});

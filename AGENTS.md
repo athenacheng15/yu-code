@@ -1,0 +1,52 @@
+# Repository Guidelines
+
+## Project Structure & Module Organization
+
+This is a Bun workspace monorepo. Runnable applications live in `apps/*`; future shared libraries should live in `packages/*`.
+
+- `apps/server`: Bun-served Hono API. Source and tests are in `apps/server/src`.
+- `apps/cli`: OpenTUI React CLI. Source is in `apps/cli/src`.
+- `packages`: reserved for shared workspace packages.
+- `tsconfig.base.json`: shared TypeScript compiler options.
+- `tsconfig.json`: root project references.
+
+Generated files such as `dist/`, `node_modules/`, and `*.tsbuildinfo` should stay untracked.
+
+## Build, Test, and Development Commands
+
+Use Bun as both runtime and package manager.
+
+```bash
+bun install                 # install workspace dependencies
+bun run dev:server          # run the Hono server in watch mode
+bun run start:server        # run the Hono server
+bun run dev:cli             # run the OpenTUI CLI in watch mode
+bun run start:cli           # run the OpenTUI CLI
+bun run --cwd apps/cli build # bundle the CLI entry to apps/cli/dist
+bun test                    # run all Bun tests
+bun run typecheck           # run TypeScript project references
+```
+
+Set `PORT=3001` or another value when port `3000` is already in use.
+
+## Coding Style & Naming Conventions
+
+Write TypeScript using ES modules. Keep app code under `src/`, use `.ts` for server files and `.tsx` for React/OpenTUI UI files. Prefer named exports for reusable app objects, such as the Hono `app`, and reserve default exports for framework entry shapes when required by Bun.
+
+Follow the existing style in touched files. Keep imports explicit and use `.js` extensions for relative imports when required by `NodeNext`.
+
+## Testing Guidelines
+
+Tests use Bun’s built-in test runner. Place tests near the code they cover with `*.test.ts` naming, for example `apps/server/src/app.test.ts`. Prefer testing Hono routes with `app.request()` so tests do not bind network ports.
+
+Run `bun test` and before submitting changes.
+
+## Commit & Pull Request Guidelines
+
+The current history uses short Conventional Commit-style messages, for example `chore: readme`. Prefer concise messages such as `feat: add health route` or `fix: update cli script`.
+
+Pull requests should include a short description, commands run, and any relevant issue links. For CLI or TUI changes, include a brief note about manual terminal testing.
+
+## Security & Configuration Tips
+
+Do not commit secrets or local `.env` files. Bun automatically loads environment files, so keep runtime configuration in environment variables such as `PORT`.
