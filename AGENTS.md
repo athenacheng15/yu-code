@@ -5,7 +5,7 @@
 This is a Bun workspace monorepo. Runnable applications live in `apps/*`; future shared libraries should live in `packages/*`.
 
 - `apps/server`: Bun-served Hono API. Source and tests are in `apps/server/src`.
-- `apps/cli`: OpenTUI React CLI. Source is in `apps/cli/src`.
+- `apps/cli`: OpenTUI React CLI. Keep screens under `src/screens/<screen-name>` and reusable UI under `src/components/<domain>`.
 - `packages`: reserved for shared workspace packages.
 - `tsconfig.base.json`: shared TypeScript compiler options.
 - `tsconfig.json`: root project references.
@@ -31,7 +31,9 @@ Set `PORT=3001` or another value when port `3000` is already in use.
 
 ## Coding Style & Naming Conventions
 
-Write TypeScript using ES modules. Keep app code under `src/`, use `.ts` for server files and `.tsx` for React/OpenTUI UI files. Prefer named exports for reusable app objects, such as the Hono `app`, and reserve default exports for framework entry shapes when required by Bun.
+Write TypeScript using ES modules. Keep app code under `src/`, use `.ts` for server files and `.tsx` for React/OpenTUI UI files. Use kebab-case file and folder names, for example `home-screen.tsx`, `ascii-logo.tsx`, and `prompt-textarea.tsx`; export PascalCase React components from those files.
+
+Separate screen-level composition from reusable components. A screen should assemble the page or route state, while components should remain focused UI pieces grouped by domain. Prefer named exports for reusable app objects, such as the Hono `app`, and reserve default exports for framework entry shapes when required by Bun.
 
 Follow the existing style in touched files. Keep imports explicit and use `.js` extensions for relative imports when required by `NodeNext`.
 

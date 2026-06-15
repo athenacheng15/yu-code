@@ -5,7 +5,8 @@
 	"scripts": {
 		"dev": "bun --watch src/index.tsx",
 		"start": "bun src/index.tsx",
-		"build": "bun build src/index.tsx --outdir dist --target bun --packages external"
+		"build": "bun build src/index.tsx --outdir dist --target bun --packages external",
+		"typecheck": "bunx tsc --noEmit"
 	},
 	"dependencies": {
 		"@yu-code/shared": "workspace:*",
