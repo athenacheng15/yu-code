@@ -37,6 +37,12 @@ Separate screen-level composition from reusable components. A screen should asse
 
 Follow the existing style in touched files. Keep imports explicit and use `.js` extensions for relative imports when required by `NodeNext`.
 
+## OpenTUI Notes
+
+Use the OpenTUI skill first for TUI work; inspect installed `node_modules` types only when the skill docs do not answer an API detail.
+
+OpenTUI React maps JSX to terminal renderables, not DOM elements. Its `<textarea>` is uncontrolled in the current version: do not model it as `value` plus `useState`. For submit-only behavior, keep a `ref` to `TextareaRenderable` and read `ref.current?.plainText` in `onSubmit`. Use `onContentChange` only when live mirrored state is actually needed.
+
 ## Testing Guidelines
 
 Tests use Bun’s built-in test runner. Place tests near the code they cover with `*.test.ts` naming, for example `apps/server/src/app.test.ts`. Prefer testing Hono routes with `app.request()` so tests do not bind network ports.
