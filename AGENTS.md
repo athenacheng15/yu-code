@@ -5,7 +5,7 @@
 This is a Bun workspace monorepo. Runnable applications live in `apps/*`; future shared libraries should live in `packages/*`.
 
 - `apps/server`: Bun-served Hono API. Source and tests are in `apps/server/src`.
-- `apps/cli`: OpenTUI React CLI. Source is in `apps/cli/src`.
+- `apps/cli`: OpenTUI React CLI. Keep screens under `src/screens/<screen-name>` and reusable UI under `src/components/<domain>`.
 - `packages`: reserved for shared workspace packages.
 - `tsconfig.base.json`: shared TypeScript compiler options.
 - `tsconfig.json`: root project references.
@@ -31,9 +31,17 @@ Set `PORT=3001` or another value when port `3000` is already in use.
 
 ## Coding Style & Naming Conventions
 
-Write TypeScript using ES modules. Keep app code under `src/`, use `.ts` for server files and `.tsx` for React/OpenTUI UI files. Prefer named exports for reusable app objects, such as the Hono `app`, and reserve default exports for framework entry shapes when required by Bun.
+Write TypeScript using ES modules. Keep app code under `src/`, use `.ts` for server files and `.tsx` for React/OpenTUI UI files. Use kebab-case file and folder names, for example `home-screen.tsx`, `ascii-logo.tsx`, and `prompt-textarea.tsx`; export PascalCase React components from those files.
+
+Separate screen-level composition from reusable components. A screen should assemble the page or route state, while components should remain focused UI pieces grouped by domain. Prefer named exports for reusable app objects, such as the Hono `app`, and reserve default exports for framework entry shapes when required by Bun.
 
 Follow the existing style in touched files. Keep imports explicit and use `.js` extensions for relative imports when required by `NodeNext`.
+
+## OpenTUI Notes
+
+Use the OpenTUI skill first for TUI work; inspect installed `node_modules` types only when the skill docs do not answer an API detail.
+
+OpenTUI React maps JSX to terminal renderables, not DOM elements. Its `<textarea>` is uncontrolled in the current version: do not model it as `value` plus `useState`. For submit-only behavior, keep a `ref` to `TextareaRenderable` and read `ref.current?.plainText` in `onSubmit`. Use `onContentChange` only when live mirrored state is actually needed.
 
 ## Testing Guidelines
 
@@ -43,7 +51,7 @@ Run `bun test` and before submitting changes.
 
 ## Commit & Pull Request Guidelines
 
-The current history uses short Conventional Commit-style messages, for example `chore: readme`. Prefer concise messages such as `feat: add health route` or `fix: update cli script`.
+Use the same format as the latest commits: short Conventional Commit-style subjects in the form `type: imperative summary`. Keep the summary lowercase and concise, for example `feat: add cli routing demo`, `fix: update cli script`, or `chore: refresh docs`.
 
 Pull requests should include a short description, commands run, and any relevant issue links. For CLI or TUI changes, include a brief note about manual terminal testing.
 
