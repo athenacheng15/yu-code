@@ -51,7 +51,7 @@ Run `bun test` and before submitting changes.
 
 ## Commit & Pull Request Guidelines
 
-The current history uses short Conventional Commit-style messages, for example `chore: readme`. Prefer concise messages such as `feat: add health route` or `fix: update cli script`.
+Use the same format as the latest commits: short Conventional Commit-style subjects in the form `type: imperative summary`. Keep the summary lowercase and concise, for example `feat: add cli routing demo`, `fix: update cli script`, or `chore: refresh docs`.
 
 Pull requests should include a short description, commands run, and any relevant issue links. For CLI or TUI changes, include a brief note about manual terminal testing.
 
