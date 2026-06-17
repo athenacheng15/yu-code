@@ -9,12 +9,14 @@
 		"typecheck": "bunx tsc --noEmit"
 	},
 	"dependencies": {
+		"@ai-sdk/react": "latest",
 		"@opentui/core": "latest",
 		"@opentui/react": "latest",
 		"@yu-code/shared": "workspace:*",
 		"hono": "latest",
 		"react": ">=19.0.0",
-		"react-router": "^7.17.0"
+		"react-router": "^7.17.0",
+		"zod": "latest"
 	},
 	"devDependencies": {
 		"@yu-code/server": "workspace:*",

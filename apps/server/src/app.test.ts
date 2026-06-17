@@ -6,6 +6,9 @@ describe("server", () => {
     const response = await app.request("/health");
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual({ ok: true });
+    expect(await response.json()).toEqual({
+      ok: true,
+      timestamp: expect.any(String),
+    });
   });
 });

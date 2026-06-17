@@ -1,20 +1,25 @@
 import type { TextareaRenderable } from "@opentui/core";
 import { useRef } from "react";
 import { useNavigate } from "react-router";
-import { navigationRoutes } from "../../app/routes";
+import { z } from "zod";
+
+const promptSubmitSchema = z.object({
+	prompt: z.string().min(1),
+});
 
 export function PromptTextarea() {
 	const navigate = useNavigate();
 	const textareaRef = useRef<TextareaRenderable>(null);
 
 	function submitPrompt() {
-		const command = textareaRef.current?.plainText.trim().toLowerCase();
-		const route = navigationRoutes.find((item) => item.command === command);
+		const state = promptSubmitSchema.safeParse({
+			prompt: textareaRef.current?.plainText ?? "",
+		});
 
-		if (!route) return;
+		if (!state.success) return;
 
 		textareaRef.current?.setText("");
-		navigate(route.path);
+		navigate("/chat", { state: state.data });
 	}
 
 	return (
