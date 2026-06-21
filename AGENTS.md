@@ -37,6 +37,20 @@ Separate screen-level composition from reusable components. A screen should asse
 
 Follow the existing style in touched files. Keep imports explicit and use `.js` extensions for relative imports when required by `NodeNext`.
 
+## Hono Notes
+
+Use the Hono skill first for API work; inspect installed `node_modules` types only when the skill docs do not answer an API detail.
+
+Whenever possible, use Hono RPC for API requests between the server and CLI apps. Keep the server route chain typed with `AppType`, expose it from `@yu-code/server/app`, and consume it from the CLI through `hc<AppType>()` instead of hand-written `fetch` calls.
+
+When a library needs a URL string for a Hono endpoint, derive it from the RPC client with `client.route.$url().toString()` rather than manually concatenating paths such as `${serverUrl}/route`.
+
+Prefer Hono's zod validator (`@hono/zod-validator`). Read validated typed input via `c.req.valid('json')`.
+
+## Validation Notes
+
+Use Zod schemas to parse or validate object-shaped data at app boundaries, including client-side route state, persisted data, API payloads, and other unknown inputs. Avoid type assertions such as `location.state as SomeType` when a runtime schema can validate the shape instead.
+
 ## OpenTUI Notes
 
 Use the OpenTUI skill first for TUI work; inspect installed `node_modules` types only when the skill docs do not answer an API detail.

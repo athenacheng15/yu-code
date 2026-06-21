@@ -2,7 +2,7 @@ import { productName } from "@yu-code/shared";
 
 export function AsciiLogo() {
 	return (
-		<box>
+		<box width="100%" overflow="hidden" flexShrink={0}>
 			<ascii-font
 				text={productName.toUpperCase()}
 				font="block"

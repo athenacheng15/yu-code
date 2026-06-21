@@ -1,9 +1,7 @@
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { RootLayout } from "./root-layout";
-import { AboutScreen } from "../screens/about/about-screen";
+import { ChatScreen } from "../screens/chat/chat-screen";
 import { HomeScreen } from "../screens/home/home-screen";
-import { NotFoundScreen } from "../screens/not-found/not-found-screen";
-import { SettingsScreen } from "../screens/settings/settings-screen";
 
 const router = createMemoryRouter([
 	{
@@ -11,9 +9,7 @@ const router = createMemoryRouter([
 		element: <RootLayout />,
 		children: [
 			{ index: true, element: <HomeScreen /> },
-			{ path: "about", element: <AboutScreen /> },
-			{ path: "settings", element: <SettingsScreen /> },
-			{ path: "*", element: <NotFoundScreen /> },
+			{ path: "chat", element: <ChatScreen /> },
 		],
 	},
 ]);

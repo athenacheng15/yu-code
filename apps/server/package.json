@@ -12,7 +12,11 @@
     "typecheck": "bunx tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "latest",
+    "@hono/zod-validator": "latest",
     "@yu-code/shared": "workspace:*",
-    "hono": "latest"
+    "ai": "latest",
+    "hono": "latest",
+    "zod": "latest"
   }
 }
