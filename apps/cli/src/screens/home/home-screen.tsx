@@ -1,11 +1,26 @@
+import { useNavigate } from "react-router";
+import { ChatTextArea } from "../../components/chat/chat-text-area";
 import { AsciiLogo } from "../../components/home/ascii-logo";
-import { PromptTextarea } from "../../components/home/prompt-textarea";
 
 export function HomeScreen() {
-  return (
-    <box flexDirection="column" padding={1}>
-      <AsciiLogo />
-      <PromptTextarea />
-    </box>
-  );
+	const navigate = useNavigate();
+
+	function submitPrompt(prompt: string) {
+		navigate("/chat", { state: { prompt } });
+	}
+
+	return (
+		<box flexDirection="column" padding={1}>
+			<AsciiLogo />
+			<box marginTop={1}>
+				<ChatTextArea
+					label="What are we building?"
+					placeholder="Ask yu-code to edit, explain, or create something..."
+					height={5}
+					focused
+					onSubmit={submitPrompt}
+				/>
+			</box>
+		</box>
+	);
 }
