@@ -31,13 +31,13 @@ export function ChatTextArea({
 	}
 
 	return (
-		<box flexDirection="column" gap={label ? 1 : 0}>
+		<box flexDirection="column" gap={label ? 1 : 0} width="100%">
 			{label ? <text fg="#6b7280">{label}</text> : null}
 			<textarea
 				ref={textareaRef}
 				initialValue=""
 				placeholder={placeholder}
-				width={72}
+				width="100%"
 				height={height}
 				focused={focused}
 				wrapMode="word"

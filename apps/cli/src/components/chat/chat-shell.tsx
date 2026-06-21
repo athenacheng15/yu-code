@@ -17,7 +17,14 @@ export function ChatShell({
 	onSubmit,
 }: ChatShellProps) {
 	return (
-		<box flexDirection="column" gap={1} flexGrow={1} width="100%">
+		<box
+			flexDirection="column"
+			gap={1}
+			flexGrow={1}
+			width="100%"
+			height="100%"
+			overflow="hidden"
+		>
 			<scrollbox
 				flexGrow={1}
 				width="100%"
@@ -52,7 +59,13 @@ export function ChatShell({
 				) : null}
 				{error ? <ChatMessageError error={error} /> : null}
 			</scrollbox>
-			<box border={["top"]} borderStyle="single" paddingTop={1} flexShrink={0}>
+			<box
+				border={["top"]}
+				borderStyle="single"
+				paddingTop={1}
+				flexShrink={0}
+				width="100%"
+			>
 				<ChatTextArea
 					label="Reply"
 					placeholder="Continue the conversation..."

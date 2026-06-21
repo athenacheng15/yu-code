@@ -10,9 +10,15 @@ export function HomeScreen() {
 	}
 
 	return (
-		<box flexDirection="column" padding={1}>
+		<box
+			flexDirection="column"
+			width="100%"
+			height="100%"
+			overflow="hidden"
+			padding={1}
+		>
 			<AsciiLogo />
-			<box marginTop={1}>
+			<box marginTop={1} width="100%">
 				<ChatTextArea
 					label="What are we building?"
 					placeholder="Ask yu-code to edit, explain, or create something..."
