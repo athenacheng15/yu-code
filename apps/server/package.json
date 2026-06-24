@@ -1,0 +1,33 @@
+{
+  "name": "@yu-code/server",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./app": "./src/app.ts"
+  },
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "test": "bun test",
+    "typecheck": "bunx tsc --noEmit",
+    "db:generate": "bunx --bun prisma generate",
+    "db:validate": "bunx --bun prisma validate",
+    "db:push": "bunx --bun prisma db push",
+    "db:studio": "bunx --bun prisma studio --browser none"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "latest",
+    "@hono/zod-validator": "latest",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
+    "@yu-code/shared": "workspace:*",
+    "ai": "latest",
+    "hono": "latest",
+    "pg": "^8.22.0",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.20.0",
+    "prisma": "^7.8.0"
+  }
+}

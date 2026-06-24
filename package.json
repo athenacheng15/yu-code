@@ -1,0 +1,22 @@
+{
+	"name": "yu-code",
+	"private": true,
+	"type": "module",
+	"workspaces": [
+		"apps/*",
+		"packages/*"
+	],
+	"scripts": {
+		"postinstall": "DATABASE_URL=${DATABASE_URL:-postgresql://unused:unused@localhost:5432/unused} bun --filter @yu-code/server db:generate",
+		"dev:server": "bun --filter @yu-code/server dev",
+		"start:server": "bun --filter @yu-code/server start",
+		"dev:cli": "bun run --cwd apps/cli dev",
+		"start:cli": "bun run --cwd apps/cli start",
+		"test": "bun test",
+		"typecheck": "bunx tsc --build"
+	},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"typescript": "^5.9.3"
+	}
+}
