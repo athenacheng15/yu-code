@@ -1,35 +1,65 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { zValidator } from "@hono/zod-validator";
 import {
+	chatParamsSchema,
+	chatTools,
+	createMessageRequestSchema,
+	type ChatMessage,
+} from "@yu-code/shared";
+import {
 	convertToModelMessages,
+	createIdGenerator,
 	safeValidateUIMessages,
 	stepCountIs,
 	streamText,
-	tool,
 } from "ai";
 import { Hono } from "hono";
 import { z } from "zod";
+import {
+	appendMessage,
+	DuplicateMessageError,
+	loadSession,
+	SessionNotFoundError,
+	toUIMessageCandidate,
+} from "../services/session-store";
 
-const chatRequestSchema = z.object({
-	messages: z.unknown().transform(async (messages, ctx) => {
-		const validation = await safeValidateUIMessages({ messages });
+const createMessageSchema = createMessageRequestSchema.transform(
+	async ({ message }, ctx) => {
+		const validation = await safeValidateUIMessages<ChatMessage>({
+			messages: [message],
+			tools: chatTools,
+		});
 
 		if (!validation.success) {
 			ctx.addIssue({
 				code: "custom",
 				message: validation.error.message,
 			});
-
 			return z.NEVER;
 		}
 
-		return validation.data;
-	}),
+		const userMessage = validation.data[0];
+		if (!userMessage || userMessage.role !== "user") {
+			ctx.addIssue({
+				code: "custom",
+				message: "The latest message must have the user role",
+			});
+			return z.NEVER;
+		}
+
+		return { message: userMessage };
+	},
+);
+
+const generateAssistantMessageId = createIdGenerator({
+	prefix: "msg",
+	size: 24,
 });
 
 export const chatRoutes = new Hono().post(
-	"/chat",
-	zValidator("json", chatRequestSchema, (result, c) => {
+	"/chat/:sessionId",
+	zValidator("param", chatParamsSchema),
+	zValidator("json", createMessageSchema, (result, c) => {
 		if (!result.success) {
 			return c.json(
 				{ error: result.error.issues[0]?.message ?? "Invalid chat request" },
@@ -38,12 +68,45 @@ export const chatRoutes = new Hono().post(
 		}
 	}),
 	async (c) => {
-		const { messages } = c.req.valid("json");
+		const { sessionId } = c.req.valid("param");
+		const { message } = c.req.valid("json");
+		const session = await loadSession(sessionId);
+
+		if (!session) {
+			return c.json({ error: "Session not found" }, 404);
+		}
+
+		const storedMessageCandidates = session.messages.map(toUIMessageCandidate);
+		const storedValidation =
+			storedMessageCandidates.length === 0
+				? { success: true as const, data: [] }
+				: await safeValidateUIMessages<ChatMessage>({
+						messages: storedMessageCandidates,
+						tools: chatTools,
+					});
+
+		if (!storedValidation.success) {
+			return c.json({ error: "Stored session messages are invalid" }, 500);
+		}
+
+		try {
+			await appendMessage(sessionId, message);
+		} catch (error) {
+			if (error instanceof SessionNotFoundError) {
+				return c.json({ error: error.message }, 404);
+			}
+			if (error instanceof DuplicateMessageError) {
+				return c.json({ error: error.message }, 409);
+			}
+			throw error;
+		}
+
+		const messages = [...storedValidation.data, message];
 		const result = streamText({
 			model: anthropic(Bun.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5"),
 			system:
 				"When the user asks for a chat rendering demo, call inspectPrompt once before answering. If they ask for a tool error demo, call failDemo. If they ask for an approval demo, call approvalDemo. Keep the final answer short.",
-			messages: await convertToModelMessages(messages),
+			messages: await convertToModelMessages(messages, { tools: chatTools }),
 			maxOutputTokens: 2048,
 			providerOptions: {
 				anthropic: {
@@ -53,46 +116,23 @@ export const chatRoutes = new Hono().post(
 					},
 				},
 			},
-			tools: {
-				inspectPrompt: tool({
-					description:
-						"Inspect a short user request so the UI can render a tool call.",
-					inputSchema: z.object({
-						request: z.string().describe("The user request to inspect."),
-					}),
-					execute: async ({ request }) => ({
-						characterCount: request.length,
-						containsDemo: request.toLowerCase().includes("demo"),
-					}),
-				}),
-				failDemo: tool({
-					description:
-						"Intentionally fail so the UI can render a tool output error state.",
-					inputSchema: z.object({
-						reason: z.string().describe("Why the demo should fail."),
-					}),
-					execute: async ({
-						reason,
-					}): Promise<{ failed: true; reason: string }> => {
-						throw new Error(`Demo tool failure: ${reason}`);
-					},
-				}),
-				approvalDemo: tool({
-					description:
-						"Request approval so the UI can render a tool approval state.",
-					needsApproval: true,
-					inputSchema: z.object({
-						action: z.string().describe("The demo action requiring approval."),
-					}),
-					execute: async ({ action }) => ({ approvedAction: action }),
-				}),
-			},
+			tools: chatTools,
 			stopWhen: stepCountIs(2),
 		});
 
+		void result.consumeStream();
+
 		return result.toUIMessageStreamResponse({
 			originalMessages: messages,
+			generateMessageId: generateAssistantMessageId,
 			sendReasoning: true,
+			onFinish: async ({ responseMessage, isAborted, finishReason }) => {
+				if (isAborted || finishReason === "error" || finishReason === undefined) {
+					return;
+				}
+
+				await appendMessage(sessionId, responseMessage);
+			},
 		});
 	},
 );

@@ -14,8 +14,8 @@ describe("server", () => {
 		expect(response.status).toBe(404);
 	});
 
-	test("rejects invalid chat message payloads", async () => {
-		const response = await app.request("/chat", {
+	test("rejects invalid message payloads", async () => {
+		const response = await app.request("/chat/session-1", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
@@ -27,5 +27,38 @@ describe("server", () => {
 		expect(await response.json()).toEqual({
 			error: expect.any(String),
 		});
+	});
+
+	test("rejects assistant messages as new session messages", async () => {
+		const response = await app.request("/chat/session-1", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				message: {
+					id: "message-1",
+					role: "assistant",
+					parts: [{ type: "text", text: "Not a user message" }],
+				},
+			}),
+		});
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toEqual({
+			error: "The latest message must have the user role",
+		});
+	});
+
+	test("rejects empty session prompts before accessing the database", async () => {
+		const response = await app.request("/sessions", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({ prompt: "   " }),
+		});
+
+		expect(response.status).toBe(400);
 	});
 });

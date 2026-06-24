@@ -22,6 +22,7 @@ bun run dev:server          # run the Hono server in watch mode
 bun run start:server        # run the Hono server
 bun run dev:cli             # run the OpenTUI CLI in watch mode
 bun run start:cli           # run the OpenTUI CLI
+bun --filter @yu-code/server db:push # sync the Prisma schema to the dev DB
 bun run --cwd apps/cli build # bundle the CLI entry to apps/cli/dist
 bun test                    # run all Bun tests
 bun run typecheck           # run TypeScript project references
@@ -36,6 +37,8 @@ Write TypeScript using ES modules. Keep app code under `src/`, use `.ts` for ser
 Separate screen-level composition from reusable components. A screen should assemble the page or route state, while components should remain focused UI pieces grouped by domain. Prefer named exports for reusable app objects, such as the Hono `app`, and reserve default exports for framework entry shapes when required by Bun.
 
 Follow the existing style in touched files. Keep imports explicit and use `.js` extensions for relative imports when required by `NodeNext`.
+
+Avoid immediately invoked async function expressions such as `void (async () => { ... })()`. Define a named local async function and invoke it normally instead, for example `async function loadData() { ... }` followed by `void loadData()`.
 
 ## Hono Notes
 
