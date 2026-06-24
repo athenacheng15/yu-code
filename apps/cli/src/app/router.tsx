@@ -9,7 +9,7 @@ const router = createMemoryRouter([
 		element: <RootLayout />,
 		children: [
 			{ index: true, element: <HomeScreen /> },
-			{ path: "chat", element: <ChatScreen /> },
+			{ path: "sessions/:id", element: <ChatScreen /> },
 		],
 	},
 ]);
