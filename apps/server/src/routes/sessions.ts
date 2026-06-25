@@ -1,12 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
 import {
 	createSessionRequestSchema,
-	chatTools,
-	type ChatMessage,
 	sessionParamsSchema,
 	type CreateSessionResponse,
 	type SessionMessagesResponse,
 } from "@yu-code/shared";
+import { chatTools, type ChatMessage } from "@yu-code/tools";
 import { safeValidateUIMessages } from "ai";
 import { Hono } from "hono";
 import {

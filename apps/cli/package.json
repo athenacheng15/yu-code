@@ -13,6 +13,7 @@
 		"@opentui/core": "latest",
 		"@opentui/react": "latest",
 		"@yu-code/shared": "workspace:*",
+		"@yu-code/tools": "workspace:*",
 		"ai": "latest",
 		"hono": "latest",
 		"react": ">=19.0.0",
@@ -20,7 +21,6 @@
 		"zod": "latest"
 	},
 	"devDependencies": {
-		"@yu-code/server": "workspace:*",
 		"@types/react": ">=19.0.0"
 	}
 }

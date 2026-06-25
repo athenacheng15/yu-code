@@ -1,9 +1,8 @@
-import { createSessionResponseEnvelopeSchema } from "@yu-code/shared";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ChatTextArea } from "../../components/chat/chat-text-area";
 import { AsciiLogo } from "../../components/home/ascii-logo";
-import { client } from "../../lib/client";
+import { createSession } from "../../lib/client";
 
 export function HomeScreen() {
 	const navigate = useNavigate();
@@ -15,24 +14,12 @@ export function HomeScreen() {
 		setError(undefined);
 
 		try {
-			const response = await client.sessions.$post({ json: { prompt } });
-			const body: unknown = await response.json();
-
-			if (!response.ok) {
-				const error =
-					typeof body === "object" &&
-					body !== null &&
-					"error" in body &&
-					typeof body.error === "string"
-						? body.error
-						: "Could not create session";
-				throw new Error(error);
-			}
-
-			const data = createSessionResponseEnvelopeSchema.parse(body);
+			const data = await createSession(prompt);
 			navigate(`/sessions/${data.id}`, { state: { prompt } });
 		} catch (cause) {
-			setError(cause instanceof Error ? cause : new Error("Could not create session"));
+			setError(
+				cause instanceof Error ? cause : new Error("Could not create session"),
+			);
 			setIsCreating(false);
 		}
 	}

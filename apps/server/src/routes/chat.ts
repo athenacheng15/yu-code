@@ -1,32 +1,30 @@
-import { anthropic } from "@ai-sdk/anthropic";
 import { zValidator } from "@hono/zod-validator";
 import {
 	chatParamsSchema,
-	chatTools,
 	createMessageRequestSchema,
-	type ChatMessage,
 } from "@yu-code/shared";
+import { chatTools, type ChatMessage } from "@yu-code/tools";
 import {
 	convertToModelMessages,
 	createIdGenerator,
 	safeValidateUIMessages,
-	stepCountIs,
-	streamText,
 } from "ai";
 import { Hono } from "hono";
 import { z } from "zod";
+import { codingAgent } from "../agents/coding-agent";
 import {
 	appendMessage,
 	DuplicateMessageError,
 	loadSession,
 	SessionNotFoundError,
 	toUIMessageCandidate,
+	upsertMessage,
 } from "../services/session-store";
 
 const createMessageSchema = createMessageRequestSchema.transform(
-	async ({ message }, ctx) => {
+	async ({ message: candidateMessage }, ctx) => {
 		const validation = await safeValidateUIMessages<ChatMessage>({
-			messages: [message],
+			messages: [candidateMessage],
 			tools: chatTools,
 		});
 
@@ -38,16 +36,19 @@ const createMessageSchema = createMessageRequestSchema.transform(
 			return z.NEVER;
 		}
 
-		const userMessage = validation.data[0];
-		if (!userMessage || userMessage.role !== "user") {
+		const validatedMessage = validation.data[0] as ChatMessage | undefined;
+		if (
+			!validatedMessage ||
+			(validatedMessage.role !== "user" && validatedMessage.role !== "assistant")
+		) {
 			ctx.addIssue({
 				code: "custom",
-				message: "The latest message must have the user role",
+				message: "The latest message must have the user or assistant role",
 			});
 			return z.NEVER;
 		}
 
-		return { message: userMessage };
+		return { message: validatedMessage };
 	},
 );
 
@@ -90,7 +91,11 @@ export const chatRoutes = new Hono().post(
 		}
 
 		try {
-			await appendMessage(sessionId, message);
+			if (message.role === "assistant") {
+				await upsertMessage(sessionId, message);
+			} else {
+				await appendMessage(sessionId, message);
+			}
 		} catch (error) {
 			if (error instanceof SessionNotFoundError) {
 				return c.json({ error: error.message }, 404);
@@ -101,23 +106,9 @@ export const chatRoutes = new Hono().post(
 			throw error;
 		}
 
-		const messages = [...storedValidation.data, message];
-		const result = streamText({
-			model: anthropic(Bun.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5"),
-			system:
-				"When the user asks for a chat rendering demo, call inspectPrompt once before answering. If they ask for a tool error demo, call failDemo. If they ask for an approval demo, call approvalDemo. Keep the final answer short.",
-			messages: await convertToModelMessages(messages, { tools: chatTools }),
-			maxOutputTokens: 2048,
-			providerOptions: {
-				anthropic: {
-					thinking: {
-						type: "enabled",
-						budgetTokens: 1024,
-					},
-				},
-			},
-			tools: chatTools,
-			stopWhen: stepCountIs(2),
+		const messages = mergeLatestMessage(storedValidation.data, message);
+		const result = await codingAgent.stream({
+			prompt: await convertToModelMessages(messages, { tools: chatTools }),
 		});
 
 		void result.consumeStream();
@@ -131,8 +122,20 @@ export const chatRoutes = new Hono().post(
 					return;
 				}
 
-				await appendMessage(sessionId, responseMessage);
+				await upsertMessage(sessionId, responseMessage);
 			},
 		});
 	},
 );
+
+function mergeLatestMessage(messages: ChatMessage[], message: ChatMessage) {
+	const existingIndex = messages.findIndex((candidate) => candidate.id === message.id);
+
+	if (existingIndex === -1) {
+		return [...messages, message];
+	}
+
+	return messages.map((candidate, index) =>
+		index === existingIndex ? message : candidate,
+	);
+}

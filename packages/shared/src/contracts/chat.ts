@@ -1,6 +1,4 @@
 import { z } from "zod";
-import type { ChatMessage } from "./chat-tools.js";
-export type { ChatMessage } from "./chat-tools.js";
 
 export const sessionIdSchema = z.string().min(1).max(64);
 
@@ -33,5 +31,5 @@ export type CreateSessionResponse = {
 };
 
 export type SessionMessagesResponse = {
-	messages: ChatMessage[];
+	messages: unknown[];
 };

@@ -104,3 +104,32 @@ export async function appendMessage(sessionId: string, message: UIMessage) {
 		throw error;
 	}
 }
+
+export async function upsertMessage(sessionId: string, message: UIMessage) {
+	const existing = await getDatabase().message.findUnique({
+		where: { id: message.id },
+		select: { sessionId: true },
+	});
+
+	if (existing) {
+		if (existing.sessionId !== sessionId) {
+			throw new DuplicateMessageError();
+		}
+
+		return getDatabase().message.update({
+			where: { id: message.id },
+			data: {
+				role: message.role,
+				parts: toInputJson(message.parts),
+				metadata:
+					message.metadata === undefined
+						? undefined
+						: message.metadata === null
+							? Prisma.JsonNull
+							: toInputJson(message.metadata),
+			},
+		});
+	}
+
+	return appendMessage(sessionId, message);
+}
