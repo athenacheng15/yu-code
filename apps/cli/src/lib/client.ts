@@ -3,8 +3,10 @@ import {
 	sessionMessagesResponseEnvelopeSchema,
 	type CreateSessionResponse,
 } from "@yu-code/shared";
-import { chatTools, type ChatMessage } from "@yu-code/tools";
-import { safeValidateUIMessages } from "ai";
+import {
+	type CodingAgentMessage,
+	validateCodingMessages,
+} from "@yu-code/ai/client";
 
 const serverUrl = Bun.env.SERVER_URL ?? "http://localhost:3000";
 
@@ -53,7 +55,7 @@ export async function createSession(
 
 export async function loadSessionMessages(
 	sessionId: string,
-): Promise<{ messages: ChatMessage[] }> {
+): Promise<{ messages: CodingAgentMessage[] }> {
 	const response = await fetch(
 		createUrl(`/sessions/${encodeURIComponent(sessionId)}/messages`),
 	);
@@ -67,10 +69,7 @@ export async function loadSessionMessages(
 	const validation =
 		envelope.messages.length === 0
 			? { success: true as const, data: [] }
-			: await safeValidateUIMessages<ChatMessage>({
-					messages: envelope.messages,
-					tools: chatTools,
-				});
+			: await validateCodingMessages(envelope.messages);
 
 	if (!validation.success) {
 		throw new Error("Session contains invalid messages");

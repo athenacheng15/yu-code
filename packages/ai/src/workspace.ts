@@ -8,7 +8,7 @@ export type WorkspacePath = {
 	relativePath: string;
 };
 
-const workspaceRoot = process.cwd();
+export const WORKSPACE_ROOT = process.cwd();
 
 function isPathInsideRoot(candidate: string, root: string) {
 	const relative = path.relative(root, candidate);
@@ -16,19 +16,19 @@ function isPathInsideRoot(candidate: string, root: string) {
 }
 
 function toDisplayPath(absolutePath: string) {
-	const relativePath = path.relative(workspaceRoot, absolutePath);
+	const relativePath = path.relative(WORKSPACE_ROOT, absolutePath);
 	return relativePath === "" ? "." : relativePath;
 }
 
 export function getWorkspaceRoot() {
-	return workspaceRoot;
+	return WORKSPACE_ROOT;
 }
 
 export function describeWorkspaceRoot() {
-	return toDisplayPath(workspaceRoot);
+	return toDisplayPath(WORKSPACE_ROOT);
 }
 
-export async function resolveWorkspacePath(
+export async function resolveWithinWorkspace(
 	requestedPath = ".",
 	options: { mustExist?: boolean } = {},
 ): Promise<WorkspacePath> {
@@ -36,13 +36,13 @@ export async function resolveWorkspacePath(
 		throw new WorkspacePathError("Use a path relative to the workspace root.");
 	}
 
-	const absolutePath = path.resolve(workspaceRoot, requestedPath);
-	if (!isPathInsideRoot(absolutePath, workspaceRoot)) {
+	const absolutePath = path.resolve(WORKSPACE_ROOT, requestedPath);
+	if (!isPathInsideRoot(absolutePath, WORKSPACE_ROOT)) {
 		throw new WorkspacePathError("Path escapes the workspace root.");
 	}
 
 	try {
-		const realRoot = await realpath(workspaceRoot);
+		const realRoot = await realpath(WORKSPACE_ROOT);
 		const realTarget = await realpath(absolutePath);
 
 		if (!isPathInsideRoot(realTarget, realRoot)) {
@@ -63,7 +63,7 @@ export async function resolveWorkspacePath(
 		}
 
 		const parentPath = path.dirname(absolutePath);
-		const realRoot = await realpath(workspaceRoot);
+		const realRoot = await realpath(WORKSPACE_ROOT);
 		const realParent = await realpath(parentPath);
 
 		if (!isPathInsideRoot(realParent, realRoot)) {
@@ -76,3 +76,5 @@ export async function resolveWorkspacePath(
 		};
 	}
 }
+
+export const resolveWorkspacePath = resolveWithinWorkspace;

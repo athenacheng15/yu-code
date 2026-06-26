@@ -3,15 +3,18 @@ import {
 	chatParamsSchema,
 	createMessageRequestSchema,
 } from "@yu-code/shared";
-import { chatTools, type ChatMessage } from "@yu-code/tools";
+import {
+	chatTools,
+	codingAgent,
+	type CodingAgentUIMessage as ChatMessage,
+	validateCodingMessages,
+} from "@yu-code/ai/server";
 import {
 	convertToModelMessages,
 	createIdGenerator,
-	safeValidateUIMessages,
 } from "ai";
 import { Hono } from "hono";
 import { z } from "zod";
-import { codingAgent } from "../agents/coding-agent";
 import {
 	appendMessage,
 	DuplicateMessageError,
@@ -23,10 +26,7 @@ import {
 
 const createMessageSchema = createMessageRequestSchema.transform(
 	async ({ message: candidateMessage }, ctx) => {
-		const validation = await safeValidateUIMessages<ChatMessage>({
-			messages: [candidateMessage],
-			tools: chatTools,
-		});
+		const validation = await validateCodingMessages([candidateMessage]);
 
 		if (!validation.success) {
 			ctx.addIssue({
@@ -81,10 +81,7 @@ export const chatRoutes = new Hono().post(
 		const storedValidation =
 			storedMessageCandidates.length === 0
 				? { success: true as const, data: [] }
-				: await safeValidateUIMessages<ChatMessage>({
-						messages: storedMessageCandidates,
-						tools: chatTools,
-					});
+				: await validateCodingMessages(storedMessageCandidates);
 
 		if (!storedValidation.success) {
 			return c.json({ error: "Stored session messages are invalid" }, 500);

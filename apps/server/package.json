@@ -16,13 +16,13 @@
     "db:studio": "bunx --bun prisma studio --browser none"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "latest",
+    "@ai-sdk/anthropic": "3.0.87",
     "@hono/zod-validator": "latest",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
+    "@yu-code/ai": "workspace:*",
     "@yu-code/shared": "workspace:*",
-    "@yu-code/tools": "workspace:*",
-    "ai": "latest",
+    "ai": "6.0.211",
     "hono": "latest",
     "pg": "^8.22.0",
     "zod": "latest"

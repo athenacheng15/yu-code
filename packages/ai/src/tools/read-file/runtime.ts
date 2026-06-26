@@ -1,9 +1,9 @@
 import { readFile as readTextFile, stat } from "node:fs/promises";
-import type { ReadFileInput, ReadFileOutput } from "@yu-code/tools";
-import { resolveWorkspacePath } from "../path-guard";
+import { resolveWithinWorkspace } from "../../workspace.js";
+import type { ReadFileInput, ReadFileOutput } from "./schema.js";
 
 export async function readFile(input: ReadFileInput): Promise<ReadFileOutput> {
-	const file = await resolveWorkspacePath(input.path, { mustExist: true });
+	const file = await resolveWithinWorkspace(input.path, { mustExist: true });
 	const fileStats = await stat(file.absolutePath);
 
 	if (!fileStats.isFile()) {

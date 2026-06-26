@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { resolveWorkspacePath, WorkspacePathError } from "./path-guard";
+import { resolveWorkspacePath, WorkspacePathError } from "./workspace";
 
 describe("path guard", () => {
 	test("resolves paths inside the invocation cwd", async () => {

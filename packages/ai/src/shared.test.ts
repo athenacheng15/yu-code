@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import {
+	editFileInputSchema,
+	grepFilesInputSchema,
 	listFilesInputSchema,
 	readFileInputSchema,
 	writeFileInputSchema,
@@ -23,6 +25,19 @@ describe("tool schemas", () => {
 	test("requires non-empty file paths", () => {
 		expect(() => readFileInputSchema.parse({ path: " " })).toThrow();
 		expect(() => writeFileInputSchema.parse({ path: "", content: "" })).toThrow();
+		expect(() =>
+			editFileInputSchema.parse({ path: "file.ts", search: "", replacement: "" }),
+		).toThrow();
+	});
+
+	test("validates grep inputs", () => {
+		expect(grepFilesInputSchema.parse({ query: "hello" })).toEqual({
+			query: "hello",
+		});
+		expect(() => grepFilesInputSchema.parse({ query: "", maxResults: 1 })).toThrow();
+		expect(() =>
+			grepFilesInputSchema.parse({ query: "hello", maxResults: 101 }),
+		).toThrow();
 	});
 
 	test("validates write output", () => {

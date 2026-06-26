@@ -1,0 +1,23 @@
+{
+  "name": "@yu-code/ai",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./tools/runners": "./src/tools/runners.ts",
+    "./workspace": "./src/workspace.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@ai-sdk/anthropic": "3.0.87",
+    "@ai-sdk/react": "3.0.213",
+    "ai": "6.0.211",
+    "react": ">=19.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/react": ">=19.0.0"
+  }
+}

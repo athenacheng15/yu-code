@@ -1,7 +1,7 @@
 import { readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import type { ListFilesInput, ListFilesOutput } from "@yu-code/tools";
-import { getWorkspaceRoot, resolveWorkspacePath } from "../path-guard";
+import { getWorkspaceRoot, resolveWithinWorkspace } from "../../workspace.js";
+import type { ListFilesInput, ListFilesOutput } from "./schema.js";
 
 const ignoredNames = new Set([".git", "node_modules", "dist"]);
 
@@ -9,7 +9,7 @@ type Entry = ListFilesOutput["entries"][number];
 
 export async function listFiles(input: ListFilesInput): Promise<ListFilesOutput> {
 	const maxDepth = input.maxDepth ?? 2;
-	const root = await resolveWorkspacePath(input.path, { mustExist: true });
+	const root = await resolveWithinWorkspace(input.path, { mustExist: true });
 	const rootStats = await stat(root.absolutePath);
 
 	if (!rootStats.isDirectory()) {
@@ -28,7 +28,7 @@ export async function listFiles(input: ListFilesInput): Promise<ListFilesOutput>
 			if (ignoredNames.has(child.name)) continue;
 
 			const childPath = path.join(directory, child.name);
-			const childWorkspacePath = await resolveWorkspacePath(
+			const childWorkspacePath = await resolveWithinWorkspace(
 				path.relative(getWorkspaceRoot(), childPath),
 				{ mustExist: true },
 			);
