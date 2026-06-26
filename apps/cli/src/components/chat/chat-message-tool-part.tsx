@@ -22,7 +22,8 @@ function formatToolValue(value: unknown) {
 	if (typeof value === "string") return value;
 
 	try {
-		return JSON.stringify(value);
+		const json = JSON.stringify(value);
+		return json.length > 600 ? `${json.slice(0, 600)}...` : json;
 	} catch {
 		return String(value);
 	}

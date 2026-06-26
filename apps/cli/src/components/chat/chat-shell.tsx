@@ -7,6 +7,10 @@ type ChatShellProps = {
 	messages: UIMessage[];
 	isLoading: boolean;
 	error?: Error;
+	pendingApproval?: {
+		path: string;
+		reason?: string;
+	};
 	onSubmit: (text: string) => void;
 };
 
@@ -14,6 +18,7 @@ export function ChatShell({
 	messages,
 	isLoading,
 	error,
+	pendingApproval,
 	onSubmit,
 }: ChatShellProps) {
 	return (
@@ -66,9 +71,21 @@ export function ChatShell({
 				flexShrink={0}
 				width="100%"
 			>
+				{pendingApproval ? (
+					<box flexDirection="column" gap={1} width="100%" marginBottom={1}>
+						<text fg="#f59e0b">{`Approve write to ${pendingApproval.path}?`}</text>
+						{pendingApproval.reason ? (
+							<text fg="#9ca3af">{pendingApproval.reason}</text>
+						) : null}
+					</box>
+				) : null}
 				<ChatTextArea
-					label="Reply"
-					placeholder="Continue the conversation..."
+					label={pendingApproval ? "Approve" : "Reply"}
+					placeholder={
+						pendingApproval
+							? "Type y to approve or n to deny..."
+							: "Continue the conversation..."
+					}
 					focused
 					disabled={isLoading}
 					onSubmit={onSubmit}

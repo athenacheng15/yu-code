@@ -29,7 +29,7 @@ describe("server", () => {
 		});
 	});
 
-	test("rejects assistant messages as new session messages", async () => {
+	test("rejects invalid non-user and non-assistant session messages", async () => {
 		const response = await app.request("/chat/session-1", {
 			method: "POST",
 			headers: {
@@ -38,7 +38,7 @@ describe("server", () => {
 			body: JSON.stringify({
 				message: {
 					id: "message-1",
-					role: "assistant",
+					role: "system",
 					parts: [{ type: "text", text: "Not a user message" }],
 				},
 			}),
@@ -46,7 +46,7 @@ describe("server", () => {
 
 		expect(response.status).toBe(400);
 		expect(await response.json()).toEqual({
-			error: "The latest message must have the user role",
+			error: "The latest message must have the user or assistant role",
 		});
 	});
 

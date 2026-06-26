@@ -1,13 +1,14 @@
 import { zValidator } from "@hono/zod-validator";
 import {
 	createSessionRequestSchema,
-	chatTools,
-	type ChatMessage,
 	sessionParamsSchema,
 	type CreateSessionResponse,
 	type SessionMessagesResponse,
 } from "@yu-code/shared";
-import { safeValidateUIMessages } from "ai";
+import {
+	type CodingAgentUIMessage as ChatMessage,
+	validateCodingMessages,
+} from "@yu-code/ai/server";
 import { Hono } from "hono";
 import {
 	createSession,
@@ -53,10 +54,7 @@ export const sessionRoutes = new Hono()
 			const validation =
 				candidates.length === 0
 					? { success: true as const, data: [] }
-					: await safeValidateUIMessages<ChatMessage>({
-							messages: candidates,
-							tools: chatTools,
-						});
+					: await validateCodingMessages(candidates);
 
 			if (!validation.success) {
 				return c.json({ error: "Stored session messages are invalid" }, 500);
