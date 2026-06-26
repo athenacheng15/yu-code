@@ -1,16 +1,10 @@
 import {
 	useChat,
 	type UseChatHelpers,
-	type UseChatOptions,
 } from "@ai-sdk/react";
 import {
 	DefaultChatTransport,
-	safeValidateUIMessages,
-	tool,
 	lastAssistantMessageIsCompleteWithToolCalls,
-	type InferUITools,
-	type UIDataTypes,
-	type UIMessage,
 } from "ai";
 import {
 	useEffect,
@@ -20,79 +14,24 @@ import {
 	type MutableRefObject,
 } from "react";
 import {
-	editFileInputSchema,
-	editFileOutputSchema,
-	grepFilesInputSchema,
-	grepFilesOutputSchema,
-	listFilesInputSchema,
-	listFilesOutputSchema,
-	readFileInputSchema,
-	readFileOutputSchema,
-	type EditFileInput,
-	type WriteFileInput,
-	writeFileInputSchema,
-	writeFileOutputSchema,
-} from "./index.js";
-import { editFile, grepFiles, listFiles, readFile, writeFile } from "./tools/runners.js";
+	type CodingAgentMessage,
+	validateCodingMessages,
+} from "./messages.js";
+import {
+	createPendingToolApproval,
+	createToolErrorPayload,
+	createToolOutputPayload,
+	getToolApprovalDisplay,
+	isCodingToolName,
+	parseToolInput,
+	runCodingTool,
+	type CodingToolName,
+	type PendingToolApproval,
+} from "./tools/registry.js";
 
-export const chatTools = {
-	listFiles: tool({
-		description:
-			"List files and directories under a relative path in the local workspace.",
-		inputSchema: listFilesInputSchema,
-		outputSchema: listFilesOutputSchema,
-	}),
-	readFile: tool({
-		description: "Read a UTF-8 text file from the local workspace.",
-		inputSchema: readFileInputSchema,
-		outputSchema: readFileOutputSchema,
-	}),
-	writeFile: tool({
-		description:
-			"Write complete UTF-8 file contents in the local workspace. Requires user approval.",
-		inputSchema: writeFileInputSchema,
-		outputSchema: writeFileOutputSchema,
-	}),
-	editFile: tool({
-		description:
-			"Replace exact text in a UTF-8 file in the local workspace. Requires user approval.",
-		inputSchema: editFileInputSchema,
-		outputSchema: editFileOutputSchema,
-	}),
-	grepFiles: tool({
-		description:
-			"Search UTF-8 text files in the local workspace by text or JavaScript regular expression.",
-		inputSchema: grepFilesInputSchema,
-		outputSchema: grepFilesOutputSchema,
-	}),
-};
+export { validateCodingMessages, type CodingAgentMessage };
 
-export type CodingAgentMessage = UIMessage<
-	unknown,
-	UIDataTypes,
-	InferUITools<typeof chatTools>
->;
-
-export async function validateCodingMessages(messages: unknown[]) {
-	return safeValidateUIMessages<CodingAgentMessage>({
-		messages,
-		tools: chatTools,
-	});
-}
-
-type PendingWriteApproval = {
-	toolName: "writeFile";
-	toolCallId: string;
-	input: WriteFileInput;
-};
-
-type PendingEditApproval = {
-	toolName: "editFile";
-	toolCallId: string;
-	input: EditFileInput;
-};
-
-type PendingApproval = PendingWriteApproval | PendingEditApproval;
+type PendingApproval = PendingToolApproval;
 
 export type CodingChatPendingApproval = {
 	toolName: PendingApproval["toolName"];
@@ -229,29 +168,19 @@ export function useCodingChat({
 		}
 
 		try {
-			if (approval.toolName === "writeFile") {
-				const output = await writeFile(approval.input);
-				void addToolOutput({
-					tool: "writeFile",
-					toolCallId: approval.toolCallId,
-					output,
-				});
-				return;
-			}
-
-			const output = await editFile(approval.input);
-			void addToolOutput({
-				tool: "editFile",
+			const output = await runCodingTool(approval.toolName, approval.input);
+			submitToolOutput({
+				addToolOutput,
+				toolName: approval.toolName,
 				toolCallId: approval.toolCallId,
 				output,
 			});
 		} catch (cause) {
-			void addToolOutput({
-				tool: approval.toolName,
+			submitToolError({
+				addToolOutput,
+				toolName: approval.toolName,
 				toolCallId: approval.toolCallId,
-				state: "output-error",
-				errorText:
-					cause instanceof Error ? cause.message : "Could not change file.",
+				errorText: cause instanceof Error ? cause.message : "Could not change file.",
 			});
 		}
 	}
@@ -261,33 +190,24 @@ export function useCodingChat({
 		isLoading,
 		error: loadError ?? error,
 		pendingApproval: pendingApproval
-			? {
-					toolName: pendingApproval.toolName,
-					path: pendingApproval.input.path,
-					reason: pendingApproval.input.reason,
-				}
+			? getToolApprovalDisplay(pendingApproval)
 			: undefined,
 		submitMessage,
 	};
 }
 
-type StaticToolCall = Exclude<
-	Parameters<CodingChatOnToolCall>[0]["toolCall"],
-	{ dynamic: true }
->;
-
-type CodingChatInitOptions = Exclude<
-	UseChatOptions<CodingAgentMessage>,
-	{ chat: unknown }
->;
-
-type CodingChatOnToolCall = NonNullable<CodingChatInitOptions["onToolCall"]>;
-
 type AddToolOutput =
 	UseChatHelpers<CodingAgentMessage>["addToolOutput"];
 
+type ClientToolCall = {
+	dynamic?: boolean;
+	toolName: string;
+	toolCallId: string;
+	input: unknown;
+};
+
 type HandleToolCallOptions = {
-	toolCall: Parameters<CodingChatOnToolCall>[0]["toolCall"];
+	toolCall: ClientToolCall;
 	addToolOutput: AddToolOutput;
 	pendingApprovalRef: MutableRefObject<PendingApproval | null>;
 	setPendingApproval: (approval: PendingApproval | null) => void;
@@ -302,8 +222,8 @@ type CodingToolCallHandlerOptions = Omit<
 
 export function createCodingToolCallHandler(
 	options: CodingToolCallHandlerOptions,
-): CodingChatOnToolCall {
-	return function onToolCall({ toolCall }) {
+) {
+	return function onToolCall({ toolCall }: { toolCall: ClientToolCall }) {
 		const addToolOutput = options.addToolOutputRef.current;
 		if (!addToolOutput) return;
 
@@ -324,22 +244,40 @@ export async function handleToolCall({
 }: HandleToolCallOptions) {
 	if (toolCall.dynamic) return;
 
-	if (toolCall.toolName === "writeFile") {
-		const parseResult = writeFileInputSchema.safeParse(toolCall.input);
-		if (!parseResult.success) {
-			void addToolOutput({
-				tool: "writeFile",
-				toolCallId: toolCall.toolCallId,
-				state: "output-error",
-				errorText: parseResult.error.issues[0]?.message ?? "Invalid write input",
-			});
-			return;
-		}
-
-		queueApproval({
-			toolName: "writeFile",
+	if (!isCodingToolName(toolCall.toolName)) {
+		submitToolError({
+			addToolOutput,
+			toolName: toolCall.toolName,
 			toolCallId: toolCall.toolCallId,
-			input: parseResult.data,
+			errorText: `Unknown tool: ${toolCall.toolName}`,
+		});
+		return;
+	}
+
+	const toolName = toolCall.toolName;
+	let input: ReturnType<typeof parseToolInput<typeof toolName>>;
+
+	try {
+		input = parseToolInput(toolName, toolCall.input);
+	} catch (cause) {
+		submitToolError({
+			addToolOutput,
+			toolName,
+			toolCallId: toolCall.toolCallId,
+			errorText: cause instanceof Error ? cause.message : "Invalid tool input.",
+		});
+		return;
+	}
+
+	const approval = createPendingToolApproval({
+		toolName,
+		toolCallId: toolCall.toolCallId,
+		input,
+	});
+
+	if (approval) {
+		queueApproval({
+			approval,
 			addToolOutput,
 			pendingApprovalRef,
 			setPendingApproval,
@@ -347,115 +285,82 @@ export async function handleToolCall({
 		return;
 	}
 
-	if (toolCall.toolName === "editFile") {
-		const parseResult = editFileInputSchema.safeParse(toolCall.input);
-		if (!parseResult.success) {
-			void addToolOutput({
-				tool: "editFile",
-				toolCallId: toolCall.toolCallId,
-				state: "output-error",
-				errorText: parseResult.error.issues[0]?.message ?? "Invalid edit input",
-			});
-			return;
-		}
-
-		queueApproval({
-			toolName: "editFile",
-			toolCallId: toolCall.toolCallId,
-			input: parseResult.data,
+	try {
+		const output = await runCodingTool(toolName, input);
+		submitToolOutput({
 			addToolOutput,
-			pendingApprovalRef,
-			setPendingApproval,
+			toolName,
+			toolCallId: toolCall.toolCallId,
+			output,
 		});
-		return;
+	} catch (cause) {
+		submitToolError({
+			addToolOutput,
+			toolName,
+			toolCallId: toolCall.toolCallId,
+			errorText: cause instanceof Error ? cause.message : "Tool execution failed.",
+		});
 	}
-
-	await executeAutomaticToolCall(toolCall, addToolOutput);
 }
 
 function queueApproval(
-	approval: PendingApproval & {
+	options: {
+		approval: PendingApproval;
 		addToolOutput: AddToolOutput;
 		pendingApprovalRef: MutableRefObject<PendingApproval | null>;
 		setPendingApproval: (approval: PendingApproval | null) => void;
 	},
 ) {
-	if (approval.pendingApprovalRef.current) {
-		void approval.addToolOutput({
-			tool: approval.toolName,
-			toolCallId: approval.toolCallId,
-			state: "output-error",
+	if (options.pendingApprovalRef.current) {
+		submitToolError({
+			addToolOutput: options.addToolOutput,
+			toolName: options.approval.toolName,
+			toolCallId: options.approval.toolCallId,
 			errorText: "Another filesystem change is already awaiting approval.",
 		});
 		return;
 	}
 
-	const nextApproval: PendingApproval =
-		approval.toolName === "writeFile"
-			? {
-					toolName: approval.toolName,
-					toolCallId: approval.toolCallId,
-					input: approval.input,
-				}
-			: {
-					toolName: approval.toolName,
-					toolCallId: approval.toolCallId,
-					input: approval.input,
-				};
-	approval.pendingApprovalRef.current = nextApproval;
-	approval.setPendingApproval(nextApproval);
+	options.pendingApprovalRef.current = options.approval;
+	options.setPendingApproval(options.approval);
 }
 
-async function executeAutomaticToolCall(
-	toolCall: StaticToolCall,
-	addToolOutput: AddToolOutput,
-) {
-	try {
-		if (toolCall.toolName === "listFiles") {
-			const input = listFilesInputSchema.parse(toolCall.input);
-			const output = await listFiles(input);
-			void addToolOutput({
-				tool: "listFiles",
-				toolCallId: toolCall.toolCallId,
-				output,
-			});
-			return;
-		}
+function submitToolOutput<Name extends CodingToolName>({
+	addToolOutput,
+	toolName,
+	toolCallId,
+	output,
+}: {
+	addToolOutput: AddToolOutput;
+	toolName: Name;
+	toolCallId: string;
+	output: Awaited<ReturnType<typeof runCodingTool<Name>>>;
+}) {
+	void addToolOutput(
+		createToolOutputPayload({
+			toolName,
+			toolCallId,
+			output,
+		}) as Parameters<AddToolOutput>[0],
+	);
+}
 
-		if (toolCall.toolName === "readFile") {
-			const input = readFileInputSchema.parse(toolCall.input);
-			const output = await readFile(input);
-			void addToolOutput({
-				tool: "readFile",
-				toolCallId: toolCall.toolCallId,
-				output,
-			});
-			return;
-		}
-
-		if (toolCall.toolName === "grepFiles") {
-			const input = grepFilesInputSchema.parse(toolCall.input);
-			const output = await grepFiles(input);
-			void addToolOutput({
-				tool: "grepFiles",
-				toolCallId: toolCall.toolCallId,
-				output,
-			});
-			return;
-		}
-
-		void addToolOutput({
-			tool: toolCall.toolName,
-			toolCallId: toolCall.toolCallId,
-			state: "output-error",
-			errorText: `Unknown tool: ${toolCall.toolName}`,
-		});
-	} catch (cause) {
-		void addToolOutput({
-			tool: toolCall.toolName,
-			toolCallId: toolCall.toolCallId,
-			state: "output-error",
-			errorText: cause instanceof Error ? cause.message : "Tool execution failed.",
-		});
-	}
+function submitToolError({
+	addToolOutput,
+	toolName,
+	toolCallId,
+	errorText,
+}: {
+	addToolOutput: AddToolOutput;
+	toolName: string;
+	toolCallId: string;
+	errorText: string;
+}) {
+	void addToolOutput(
+		createToolErrorPayload({
+			toolName: toolName as CodingToolName,
+			toolCallId,
+			errorText,
+		}) as Parameters<AddToolOutput>[0],
+	);
 }

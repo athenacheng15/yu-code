@@ -1,56 +1,16 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import {
-	safeValidateUIMessages,
 	stepCountIs,
-	tool,
 	ToolLoopAgent,
-	type InferAgentUIMessage,
 } from "ai";
 import { systemInstructions } from "./instructions.js";
-import {
-	editFileInputSchema,
-	editFileOutputSchema,
-	grepFilesInputSchema,
-	grepFilesOutputSchema,
-	listFilesInputSchema,
-	listFilesOutputSchema,
-	readFileInputSchema,
-	readFileOutputSchema,
-	writeFileInputSchema,
-	writeFileOutputSchema,
-} from "./index.js";
+import { chatTools } from "./tools/registry.js";
 
-export const chatTools = {
-	listFiles: tool({
-		description:
-			"List files and directories under a relative path in the local workspace.",
-		inputSchema: listFilesInputSchema,
-		outputSchema: listFilesOutputSchema,
-	}),
-	readFile: tool({
-		description: "Read a UTF-8 text file from the local workspace.",
-		inputSchema: readFileInputSchema,
-		outputSchema: readFileOutputSchema,
-	}),
-	writeFile: tool({
-		description:
-			"Write complete UTF-8 file contents in the local workspace. Requires user approval.",
-		inputSchema: writeFileInputSchema,
-		outputSchema: writeFileOutputSchema,
-	}),
-	editFile: tool({
-		description:
-			"Replace exact text in a UTF-8 file in the local workspace. Requires user approval.",
-		inputSchema: editFileInputSchema,
-		outputSchema: editFileOutputSchema,
-	}),
-	grepFiles: tool({
-		description:
-			"Search UTF-8 text files in the local workspace by text or JavaScript regular expression.",
-		inputSchema: grepFilesInputSchema,
-		outputSchema: grepFilesOutputSchema,
-	}),
-};
+export {
+	type CodingAgentMessage as CodingAgentUIMessage,
+	validateCodingMessages,
+} from "./messages.js";
+export { chatTools } from "./tools/registry.js";
 
 export const codingAgent = new ToolLoopAgent({
 	id: "yu-code-coding-agent",
@@ -68,12 +28,3 @@ export const codingAgent = new ToolLoopAgent({
 	tools: chatTools,
 	stopWhen: stepCountIs(6),
 });
-
-export type CodingAgentUIMessage = InferAgentUIMessage<typeof codingAgent>;
-
-export async function validateCodingMessages(messages: unknown[]) {
-	return safeValidateUIMessages<CodingAgentUIMessage>({
-		messages,
-		tools: chatTools,
-	});
-}
