@@ -29,6 +29,28 @@ describe("server", () => {
 		});
 	});
 
+	test("rejects invalid chat modes before accessing the database", async () => {
+		const response = await app.request("/chat/session-1", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				mode: "review",
+				message: {
+					id: "message-1",
+					role: "user",
+					parts: [{ type: "text", text: "Hello" }],
+				},
+			}),
+		});
+
+		expect(response.status).toBe(400);
+		expect(await response.json()).toEqual({
+			error: expect.any(String),
+		});
+	});
+
 	test("rejects invalid non-user and non-assistant session messages", async () => {
 		const response = await app.request("/chat/session-1", {
 			method: "POST",

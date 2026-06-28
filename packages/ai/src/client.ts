@@ -18,6 +18,11 @@ import {
 	validateCodingMessages,
 } from "./messages.js";
 import {
+	defaultModeId,
+	isToolAllowedInMode,
+	type ModeId,
+} from "./modes.js";
+import {
 	createPendingToolApproval,
 	createToolErrorPayload,
 	createToolOutputPayload,
@@ -29,6 +34,14 @@ import {
 	type PendingToolApproval,
 } from "./tools/registry.js";
 
+export {
+	defaultModeId,
+	getMode,
+	getNextModeId,
+	modeSchema,
+	modes,
+	type ModeId,
+} from "./modes.js";
 export { validateCodingMessages, type CodingAgentMessage };
 
 type PendingApproval = PendingToolApproval;
@@ -42,6 +55,7 @@ export type CodingChatPendingApproval = {
 export type UseCodingChatOptions = {
 	sessionId: string;
 	api: string;
+	mode?: ModeId;
 	prompt?: string;
 	loadMessages: (sessionId: string) => Promise<{ messages: CodingAgentMessage[] }>;
 };
@@ -49,21 +63,25 @@ export type UseCodingChatOptions = {
 export function useCodingChat({
 	sessionId,
 	api,
+	mode = defaultModeId,
 	prompt = "",
 	loadMessages,
 }: UseCodingChatOptions) {
 	const submittedPromptRef = useRef<string | null>(null);
 	const pendingApprovalRef = useRef<PendingApproval | null>(null);
 	const addToolOutputRef = useRef<AddToolOutput | null>(null);
+	const modeRef = useRef<ModeId>(mode);
 	const [isHydrated, setIsHydrated] = useState(false);
 	const [loadError, setLoadError] = useState<Error>();
 	const [pendingApproval, setPendingApproval] = useState<PendingApproval | null>(null);
+	modeRef.current = mode;
 	const transport = useMemo(() => {
 		return new DefaultChatTransport<CodingAgentMessage>({
 			api,
 			prepareSendMessagesRequest: ({ messages }) => ({
 				body: {
 					message: messages.at(-1),
+					mode: modeRef.current,
 				},
 			}),
 		});
@@ -75,6 +93,7 @@ export function useCodingChat({
 			sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
 			onToolCall: createCodingToolCallHandler({
 				addToolOutputRef,
+				modeRef,
 				pendingApprovalRef,
 				setPendingApproval,
 			}),
@@ -209,6 +228,7 @@ type ClientToolCall = {
 type HandleToolCallOptions = {
 	toolCall: ClientToolCall;
 	addToolOutput: AddToolOutput;
+	mode?: ModeId;
 	pendingApprovalRef: MutableRefObject<PendingApproval | null>;
 	setPendingApproval: (approval: PendingApproval | null) => void;
 };
@@ -218,6 +238,7 @@ type CodingToolCallHandlerOptions = Omit<
 	"toolCall" | "addToolOutput"
 > & {
 	addToolOutputRef: MutableRefObject<AddToolOutput | null>;
+	modeRef: MutableRefObject<ModeId>;
 };
 
 export function createCodingToolCallHandler(
@@ -229,6 +250,7 @@ export function createCodingToolCallHandler(
 
 		void handleToolCall({
 			addToolOutput,
+			mode: options.modeRef.current,
 			pendingApprovalRef: options.pendingApprovalRef,
 			setPendingApproval: options.setPendingApproval,
 			toolCall,
@@ -239,6 +261,7 @@ export function createCodingToolCallHandler(
 export async function handleToolCall({
 	toolCall,
 	addToolOutput,
+	mode = defaultModeId,
 	pendingApprovalRef,
 	setPendingApproval,
 }: HandleToolCallOptions) {
@@ -255,6 +278,17 @@ export async function handleToolCall({
 	}
 
 	const toolName = toolCall.toolName;
+
+	if (!isToolAllowedInMode(toolName, mode)) {
+		submitToolError({
+			addToolOutput,
+			toolName,
+			toolCallId: toolCall.toolCallId,
+			errorText: `${toolName} is not available in ${mode} mode.`,
+		});
+		return;
+	}
+
 	let input: ReturnType<typeof parseToolInput<typeof toolName>>;
 
 	try {

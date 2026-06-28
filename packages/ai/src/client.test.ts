@@ -98,6 +98,33 @@ describe("client tool dispatch", () => {
 		});
 	});
 
+	test("rejects tools that are unavailable in the active mode", async () => {
+		const harness = createHarness();
+
+		await handleToolCall({
+			...harness,
+			mode: "plan",
+			toolCall: {
+				toolName: "writeFile",
+				toolCallId: "call-write",
+				input: {
+					path: `${fixtureRoot}/write.txt`,
+					content: "hello",
+				},
+			},
+		});
+
+		expect(harness.pendingApproval).toBeNull();
+		expect(harness.outputs).toEqual([
+			{
+				tool: "writeFile",
+				toolCallId: "call-write",
+				state: "output-error",
+				errorText: "writeFile is not available in plan mode.",
+			},
+		]);
+	});
+
 	test("reports unknown tools as tool errors", async () => {
 		const harness = createHarness();
 
