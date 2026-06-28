@@ -6,6 +6,7 @@ import {
 import {
 	chatTools,
 	codingAgent,
+	modeSchema,
 	type CodingAgentUIMessage as ChatMessage,
 	validateCodingMessages,
 } from "@yu-code/ai/server";
@@ -25,7 +26,16 @@ import {
 } from "../services/session-store";
 
 const createMessageSchema = createMessageRequestSchema.transform(
-	async ({ message: candidateMessage }, ctx) => {
+	async ({ message: candidateMessage, mode: candidateMode }, ctx) => {
+		const modeResult = modeSchema.safeParse(candidateMode);
+		if (!modeResult.success) {
+			ctx.addIssue({
+				code: "custom",
+				message: "Invalid chat mode",
+			});
+			return z.NEVER;
+		}
+
 		const validation = await validateCodingMessages([candidateMessage]);
 
 		if (!validation.success) {
@@ -48,7 +58,7 @@ const createMessageSchema = createMessageRequestSchema.transform(
 			return z.NEVER;
 		}
 
-		return { message: validatedMessage };
+		return { message: validatedMessage, mode: modeResult.data };
 	},
 );
 
@@ -70,7 +80,7 @@ export const chatRoutes = new Hono().post(
 	}),
 	async (c) => {
 		const { sessionId } = c.req.valid("param");
-		const { message } = c.req.valid("json");
+		const { message, mode } = c.req.valid("json");
 		const session = await loadSession(sessionId);
 
 		if (!session) {
@@ -106,6 +116,7 @@ export const chatRoutes = new Hono().post(
 		const messages = mergeLatestMessage(storedValidation.data, message);
 		const result = await codingAgent.stream({
 			prompt: await convertToModelMessages(messages, { tools: chatTools }),
+			options: { mode },
 		});
 
 		void result.consumeStream();

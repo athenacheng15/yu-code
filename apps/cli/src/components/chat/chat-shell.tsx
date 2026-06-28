@@ -7,6 +7,7 @@ type ChatShellProps = {
 	messages: UIMessage[];
 	isLoading: boolean;
 	error?: Error;
+	modeLabel: string;
 	pendingApproval?: {
 		path: string;
 		reason?: string;
@@ -18,6 +19,7 @@ export function ChatShell({
 	messages,
 	isLoading,
 	error,
+	modeLabel,
 	pendingApproval,
 	onSubmit,
 }: ChatShellProps) {
@@ -67,6 +69,8 @@ export function ChatShell({
 			<box
 				border={["top"]}
 				borderStyle="single"
+				flexDirection="column"
+				gap={1}
 				paddingTop={1}
 				flexShrink={0}
 				width="100%"
@@ -90,6 +94,7 @@ export function ChatShell({
 					disabled={isLoading}
 					onSubmit={onSubmit}
 				/>
+				<text fg="#6b7280">{`Mode: ${modeLabel}`}</text>
 			</box>
 		</box>
 	);
