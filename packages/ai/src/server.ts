@@ -5,6 +5,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { systemInstructions } from "./instructions.js";
+import { codingModelId } from "./model-config.js";
 import {
 	getMode,
 	modeSchema,
@@ -33,7 +34,7 @@ const callOptionsSchema = z.object({
 
 export const codingAgent = new ToolLoopAgent({
 	id: "yu-code-coding-agent",
-	model: anthropic(Bun.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5"),
+	model: anthropic(codingModelId),
 	callOptionsSchema,
 	instructions: systemInstructions,
 	maxOutputTokens: 2048,

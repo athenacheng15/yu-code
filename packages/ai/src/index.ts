@@ -8,3 +8,4 @@ export {
 	modes,
 	type ModeId,
 } from "./modes.js";
+export { codingModelId, codingModelProvider } from "./model-config.js";

@@ -19,6 +19,7 @@ describe("ChatShell", () => {
 				<ChatShell
 					messages={[]}
 					isLoading={false}
+					modeId="plan"
 					modeLabel="Plan"
 					onSubmit={() => {}}
 				/>,
@@ -31,6 +32,8 @@ describe("ChatShell", () => {
 
 		if (!testSetup) throw new Error("Test renderer was not initialized");
 
-		expect(testSetup.captureCharFrame()).toContain("Mode: Plan");
+		expect(testSetup.captureCharFrame()).toContain(
+			"Plan · claude-haiku-4-5 Anthropic",
+		);
 	});
 });
