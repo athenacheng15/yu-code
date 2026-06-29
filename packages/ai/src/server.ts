@@ -5,10 +5,11 @@ import {
 } from "ai";
 import { z } from "zod";
 import { systemInstructions } from "./instructions.js";
+import { codingModelId } from "./model-config.js";
 import {
+	defaultModeId,
 	getMode,
 	modeSchema,
-	type ModeId,
 } from "./modes.js";
 import { chatTools } from "./tools/registry.js";
 
@@ -33,7 +34,7 @@ const callOptionsSchema = z.object({
 
 export const codingAgent = new ToolLoopAgent({
 	id: "yu-code-coding-agent",
-	model: anthropic(Bun.env.ANTHROPIC_MODEL ?? "claude-haiku-4-5"),
+	model: anthropic(codingModelId),
 	callOptionsSchema,
 	instructions: systemInstructions,
 	maxOutputTokens: 2048,
@@ -47,7 +48,7 @@ export const codingAgent = new ToolLoopAgent({
 	},
 	tools: chatTools,
 	prepareCall: ({ options, ...settings }) => {
-		const mode = getMode((options?.mode ?? "build") as ModeId);
+		const mode = getMode(options?.mode ?? defaultModeId);
 
 		return {
 			...settings,

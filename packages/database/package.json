@@ -1,0 +1,21 @@
+{
+  "name": "@yu-code/database",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "db:generate": "bunx --bun prisma generate",
+    "db:validate": "bunx --bun prisma validate",
+    "db:push": "bunx --bun prisma db push",
+    "db:studio": "bunx --bun prisma studio --browser none"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.8.0"
+  },
+  "devDependencies": {
+    "prisma": "^7.8.0"
+  }
+}

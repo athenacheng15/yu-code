@@ -13,6 +13,21 @@ afterEach(() => {
 });
 
 describe("root layout", () => {
+	test("shows the current mode on the home screen", async () => {
+		await act(async () => {
+			testSetup = await testRender(<AppRouter />, { width: 80, height: 24 });
+		});
+		await act(async () => {
+			await testSetup?.renderOnce();
+		});
+
+		if (!testSetup) throw new Error("Test renderer was not initialized");
+
+		expect(testSetup.captureCharFrame()).toContain(
+			"Build · claude-haiku-4-5 Anthropic",
+		);
+	});
+
 	test("clips stale content after resizing from wide to narrow", async () => {
 		await act(async () => {
 			testSetup = await testRender(<AppRouter />, { width: 100, height: 24 });

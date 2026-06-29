@@ -1,3 +1,4 @@
+import { ChatMode } from "@yu-code/database";
 import { z } from "zod";
 import { type CodingToolName } from "./tools/registry.js";
 
@@ -15,7 +16,7 @@ const planToolNames = [
 	"grepFiles",
 ] as const satisfies readonly CodingToolName[];
 
-export const modeSchema = z.enum(["build", "plan"]);
+export const modeSchema = z.enum(ChatMode);
 
 export type ModeId = z.infer<typeof modeSchema>;
 
@@ -29,7 +30,7 @@ export type ModeDefinition = {
 
 export const modes = [
 	{
-		id: "build",
+		id: ChatMode.build,
 		label: "Build",
 		description: "Implement changes with approval-gated filesystem writes.",
 		instructions:
@@ -37,7 +38,7 @@ export const modes = [
 		toolNames: buildToolNames,
 	},
 	{
-		id: "plan",
+		id: ChatMode.plan,
 		label: "Plan",
 		description: "Read-only planning mode for safe inspection and implementation plans.",
 		instructions:
@@ -46,7 +47,7 @@ export const modes = [
 	},
 ] as const satisfies readonly ModeDefinition[];
 
-export const defaultModeId: ModeId = "build";
+export const defaultModeId: ModeId = ChatMode.build;
 
 export function getMode(modeId: ModeId): ModeDefinition {
 	return modes.find((mode) => mode.id === modeId) ?? modes[0];

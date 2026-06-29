@@ -4,10 +4,15 @@ import {
 	type UIDataTypes,
 	type UIMessage,
 } from "ai";
+import type { ModeId } from "./modes.js";
 import { chatTools } from "./tools/registry.js";
 
+export type CodingMessageMetadata = {
+	mode?: ModeId;
+};
+
 export type CodingAgentMessage = UIMessage<
-	unknown,
+	CodingMessageMetadata,
 	UIDataTypes,
 	InferUITools<typeof chatTools>
 >;

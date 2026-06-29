@@ -6,7 +6,8 @@ This is a Bun workspace monorepo. Runnable applications live in `apps/*`; future
 
 - `apps/server`: Bun-served Hono API. Source and tests are in `apps/server/src`.
 - `apps/cli`: OpenTUI React CLI. Keep screens under `src/screens/<screen-name>` and reusable UI under `src/components/<domain>`.
-- `packages`: reserved for shared workspace packages.
+- `packages/database`: Prisma schema, generated client, and stable database exports.
+- `packages`: shared workspace packages.
 - `tsconfig.base.json`: shared TypeScript compiler options.
 - `tsconfig.json`: root project references.
 
@@ -22,7 +23,7 @@ bun run dev:server          # run the Hono server in watch mode
 bun run start:server        # run the Hono server
 bun run dev:cli             # run the OpenTUI CLI in watch mode
 bun run start:cli           # run the OpenTUI CLI
-bun --filter @yu-code/server db:push # sync the Prisma schema to the dev DB
+bun --filter @yu-code/database db:push # sync the Prisma schema to the dev DB
 bun run --cwd apps/cli build # bundle the CLI entry to apps/cli/dist
 bun test                    # run all Bun tests
 bun run typecheck           # run TypeScript project references

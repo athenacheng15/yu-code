@@ -2,6 +2,7 @@ import {
 	defaultModeId,
 	getMode,
 	getNextModeId,
+	modeSchema,
 	useCodingChat,
 	type ModeId,
 } from "@yu-code/ai/client";
@@ -14,6 +15,7 @@ import { ChatShell } from "../../components/chat/chat-shell";
 import { createChatUrl, loadSessionMessages } from "../../lib/client";
 
 const chatLocationStateSchema = z.object({
+	mode: modeSchema.optional(),
 	prompt: z.string(),
 });
 
@@ -23,7 +25,9 @@ export function ChatScreen() {
 	const sessionId = sessionIdSchema.parse(params.id);
 	const state = chatLocationStateSchema.safeParse(location.state);
 	const prompt = state.success ? state.data.prompt : "";
-	const [mode, setMode] = useState<ModeId>(defaultModeId);
+	const [mode, setMode] = useState<ModeId>(
+		state.success ? (state.data.mode ?? defaultModeId) : defaultModeId,
+	);
 	const { messages, isLoading, error, pendingApproval, submitMessage } =
 		useCodingChat({
 			sessionId,
@@ -49,6 +53,7 @@ export function ChatScreen() {
 			messages={messages}
 			isLoading={isLoading}
 			error={error}
+			modeId={activeMode.id}
 			modeLabel={activeMode.label}
 			pendingApproval={
 				pendingApproval

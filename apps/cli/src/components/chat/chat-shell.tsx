@@ -1,12 +1,14 @@
-import type { UIMessage } from "ai";
 import { ChatMessage } from "./chat-message";
 import { ChatMessageError } from "./chat-message-error";
 import { ChatTextArea } from "./chat-text-area";
+import { ModeStatus } from "./mode-status";
+import type { CodingAgentMessage, ModeId } from "@yu-code/ai/client";
 
 type ChatShellProps = {
-	messages: UIMessage[];
+	messages: CodingAgentMessage[];
 	isLoading: boolean;
 	error?: Error;
+	modeId: ModeId;
 	modeLabel: string;
 	pendingApproval?: {
 		path: string;
@@ -19,6 +21,7 @@ export function ChatShell({
 	messages,
 	isLoading,
 	error,
+	modeId,
 	modeLabel,
 	pendingApproval,
 	onSubmit,
@@ -54,7 +57,11 @@ export function ChatShell({
 				}}
 			>
 				{messages.map((message) => (
-					<ChatMessage key={message.id} message={message} />
+					<ChatMessage
+						key={message.id}
+						currentModeId={modeId}
+						message={message}
+					/>
 				))}
 				{isLoading ? (
 					<box flexDirection="row" alignItems="flex-start" gap={1} width="100%">
@@ -67,8 +74,6 @@ export function ChatShell({
 				{error ? <ChatMessageError error={error} /> : null}
 			</scrollbox>
 			<box
-				border={["top"]}
-				borderStyle="single"
 				flexDirection="column"
 				gap={1}
 				paddingTop={1}
@@ -85,6 +90,7 @@ export function ChatShell({
 				) : null}
 				<ChatTextArea
 					label={pendingApproval ? "Approve" : "Reply"}
+					modeId={modeId}
 					placeholder={
 						pendingApproval
 							? "Type y to approve or n to deny..."
@@ -92,9 +98,9 @@ export function ChatShell({
 					}
 					focused
 					disabled={isLoading}
+					footer={<ModeStatus modeId={modeId} modeLabel={modeLabel} />}
 					onSubmit={onSubmit}
 				/>
-				<text fg="#6b7280">{`Mode: ${modeLabel}`}</text>
 			</box>
 		</box>
 	);

@@ -9,18 +9,14 @@
     "dev": "bun --watch src/index.ts",
     "start": "bun src/index.ts",
     "test": "bun test",
-    "typecheck": "bunx tsc --noEmit",
-    "db:generate": "bunx --bun prisma generate",
-    "db:validate": "bunx --bun prisma validate",
-    "db:push": "bunx --bun prisma db push",
-    "db:studio": "bunx --bun prisma studio --browser none"
+    "typecheck": "bunx tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "3.0.87",
     "@hono/zod-validator": "latest",
     "@prisma/adapter-pg": "^7.8.0",
-    "@prisma/client": "^7.8.0",
     "@yu-code/ai": "workspace:*",
+    "@yu-code/database": "workspace:*",
     "@yu-code/shared": "workspace:*",
     "ai": "6.0.211",
     "hono": "latest",
@@ -28,7 +24,6 @@
     "zod": "latest"
   },
   "devDependencies": {
-    "@types/pg": "^8.20.0",
-    "prisma": "^7.8.0"
+    "@types/pg": "^8.20.0"
   }
 }

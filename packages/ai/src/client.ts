@@ -42,6 +42,7 @@ export {
 	modes,
 	type ModeId,
 } from "./modes.js";
+export { codingModelId, codingModelProvider } from "./model-config.js";
 export { validateCodingMessages, type CodingAgentMessage };
 
 type PendingApproval = PendingToolApproval;
@@ -145,7 +146,7 @@ export function useCodingChat({
 		}
 
 		submittedPromptRef.current = prompt;
-		void sendMessage({ text: prompt });
+		void sendMessage({ text: prompt, metadata: { mode: modeRef.current } });
 	}, [isHydrated, messages.length, prompt, sendMessage]);
 
 	function submitMessage(text: string) {
@@ -154,7 +155,7 @@ export function useCodingChat({
 			return;
 		}
 
-		void sendMessage({ text });
+		void sendMessage({ text, metadata: { mode: modeRef.current } });
 	}
 
 	async function submitApproval(text: string) {
