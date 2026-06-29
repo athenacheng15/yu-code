@@ -1,5 +1,5 @@
 import type { UIMessage } from "ai";
-import { Prisma } from "../generated/prisma/client";
+import { Prisma } from "@yu-code/database";
 import { getDatabase } from "../lib/database";
 
 const sessionTitleLength = 120;

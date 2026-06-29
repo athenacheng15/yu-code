@@ -27,8 +27,7 @@ dist/
 .env
 .env.*
 **/.env
-!.env.example
-!**/.env.example
 
 ### Prisma
 apps/server/src/generated/prisma/
+packages/database/src/generated/prisma/

@@ -33,8 +33,8 @@
         "@ai-sdk/anthropic": "3.0.87",
         "@hono/zod-validator": "latest",
         "@prisma/adapter-pg": "^7.8.0",
-        "@prisma/client": "^7.8.0",
         "@yu-code/ai": "workspace:*",
+        "@yu-code/database": "workspace:*",
         "@yu-code/shared": "workspace:*",
         "ai": "6.0.211",
         "hono": "latest",
@@ -43,7 +43,6 @@
       },
       "devDependencies": {
         "@types/pg": "^8.20.0",
-        "prisma": "^7.8.0",
       },
     },
     "packages/ai": {
@@ -51,6 +50,7 @@
       "dependencies": {
         "@ai-sdk/anthropic": "3.0.87",
         "@ai-sdk/react": "3.0.213",
+        "@yu-code/database": "workspace:*",
         "ai": "6.0.211",
         "react": ">=19.0.0",
         "zod": "^4.4.3",
@@ -59,9 +59,19 @@
         "@types/react": ">=19.0.0",
       },
     },
+    "packages/database": {
+      "name": "@yu-code/database",
+      "dependencies": {
+        "@prisma/client": "^7.8.0",
+      },
+      "devDependencies": {
+        "prisma": "^7.8.0",
+      },
+    },
     "packages/shared": {
       "name": "@yu-code/shared",
       "dependencies": {
+        "@yu-code/database": "workspace:*",
         "zod": "^4.4.3",
       },
     },
@@ -170,6 +180,8 @@
     "@yu-code/ai": ["@yu-code/ai@workspace:packages/ai"],
 
     "@yu-code/cli": ["@yu-code/cli@workspace:apps/cli"],
+
+    "@yu-code/database": ["@yu-code/database@workspace:packages/database"],
 
     "@yu-code/server": ["@yu-code/server@workspace:apps/server"],
 

@@ -7,7 +7,7 @@
 		"packages/*"
 	],
 	"scripts": {
-		"postinstall": "DATABASE_URL=${DATABASE_URL:-postgresql://unused:unused@localhost:5432/unused} bun --filter @yu-code/server db:generate",
+		"postinstall": "bun --filter @yu-code/database db:generate",
 		"dev:server": "bun --filter @yu-code/server dev",
 		"start:server": "bun --filter @yu-code/server start",
 		"dev:cli": "bun run --cwd apps/cli dev",
