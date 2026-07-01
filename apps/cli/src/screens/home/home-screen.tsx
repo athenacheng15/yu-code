@@ -10,10 +10,12 @@ import { useNavigate } from "react-router";
 import { ChatTextArea } from "../../components/chat/chat-text-area";
 import { ModeStatus } from "../../components/chat/mode-status";
 import { AsciiLogo } from "../../components/home/ascii-logo";
+import { useChatCommands } from "../../hooks/use-chat-commands";
 import { createSession } from "../../lib/client";
 
 export function HomeScreen() {
 	const navigate = useNavigate();
+	const executeChatCommand = useChatCommands();
 	const [mode, setMode] = useState<ModeId>(defaultModeId);
 	const [isCreating, setIsCreating] = useState(false);
 	const [error, setError] = useState<Error>();
@@ -69,6 +71,7 @@ export function HomeScreen() {
 						<ModeStatus modeId={activeMode.id} modeLabel={activeMode.label} />
 					}
 					onSubmit={submitPrompt}
+					onCommand={executeChatCommand}
 				/>
 			</box>
 			{isCreating ? <text fg="#6b7280">Creating session...</text> : null}

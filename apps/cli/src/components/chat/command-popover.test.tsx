@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test";
 import { testRender } from "@opentui/react/test-utils";
 import { act } from "react";
-import { ChatShell } from "./chat-shell";
+import { chatCommands } from "../../lib/chat-commands";
+import { CommandPopover } from "./command-popover";
 
 let testSetup: Awaited<ReturnType<typeof testRender>> | undefined;
 
@@ -12,19 +13,12 @@ afterEach(() => {
 	testSetup = undefined;
 });
 
-describe("ChatShell", () => {
-	test("renders the active mode beneath the textarea", async () => {
+describe("CommandPopover", () => {
+	test("renders command tokens and descriptions", async () => {
 		await act(async () => {
 			testSetup = await testRender(
-				<ChatShell
-					messages={[]}
-					isLoading={false}
-					modeId="plan"
-					modeLabel="Plan"
-					onSubmit={() => {}}
-					onCommand={() => false}
-				/>,
-				{ width: 80, height: 20 },
+				<CommandPopover commands={chatCommands} activeIndex={1} top={0} />,
+				{ width: 80, height: 8 },
 			);
 		});
 		await act(async () => {
@@ -33,8 +27,11 @@ describe("ChatShell", () => {
 
 		if (!testSetup) throw new Error("Test renderer was not initialized");
 
-		expect(testSetup.captureCharFrame()).toContain(
-			"Plan · claude-haiku-4-5 Anthropic",
-		);
+		const frame = testSetup.captureCharFrame();
+
+		expect(frame).toContain("/exit");
+		expect(frame).toContain("Exit yu-code");
+		expect(frame).toContain("/new");
+		expect(frame).toContain("Start a new chat");
 	});
 });
