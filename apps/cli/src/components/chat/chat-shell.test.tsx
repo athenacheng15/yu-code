@@ -22,6 +22,7 @@ describe("ChatShell", () => {
 					modeId="plan"
 					modeLabel="Plan"
 					onSubmit={() => {}}
+					onCommand={() => false}
 				/>,
 				{ width: 80, height: 20 },
 			);

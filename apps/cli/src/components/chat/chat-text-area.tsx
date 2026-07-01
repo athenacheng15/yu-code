@@ -13,6 +13,7 @@ type ChatTextAreaProps = {
 	disabled?: boolean;
 	footer?: ReactNode;
 	onSubmit: (text: string) => void;
+	onCommand?: (text: string) => boolean;
 };
 
 export function ChatTextArea({
@@ -24,6 +25,7 @@ export function ChatTextArea({
 	disabled = false,
 	footer,
 	onSubmit,
+	onCommand,
 }: ChatTextAreaProps) {
 	const textareaRef = useRef<TextareaRenderable>(null);
 	const backgroundColor = chatInputBackgroundColor;
@@ -35,8 +37,14 @@ export function ChatTextArea({
 	function submitText() {
 		if (disabled) return;
 
-		const text = textareaRef.current?.plainText.trim() ?? "";
+		const rawText = textareaRef.current?.plainText ?? "";
+		const text = rawText.trim();
 		if (!text) return;
+
+		if (onCommand?.(rawText)) {
+			textareaRef.current?.setText("");
+			return;
+		}
 
 		textareaRef.current?.setText("");
 		onSubmit(text);

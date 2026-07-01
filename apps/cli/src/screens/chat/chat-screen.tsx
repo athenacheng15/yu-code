@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useLocation, useParams } from "react-router";
 import { z } from "zod";
 import { ChatShell } from "../../components/chat/chat-shell";
+import { useChatCommands } from "../../hooks/use-chat-commands";
 import { createChatUrl, loadSessionMessages } from "../../lib/client";
 
 const chatLocationStateSchema = z.object({
@@ -21,6 +22,7 @@ const chatLocationStateSchema = z.object({
 
 export function ChatScreen() {
 	const location = useLocation();
+	const executeChatCommand = useChatCommands();
 	const params = useParams<{ id: string }>();
 	const sessionId = sessionIdSchema.parse(params.id);
 	const state = chatLocationStateSchema.safeParse(location.state);
@@ -64,6 +66,7 @@ export function ChatScreen() {
 					: undefined
 			}
 			onSubmit={submitMessage}
+			onCommand={executeChatCommand}
 		/>
 	);
 }

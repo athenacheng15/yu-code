@@ -15,6 +15,7 @@ type ChatShellProps = {
 		reason?: string;
 	};
 	onSubmit: (text: string) => void;
+	onCommand?: (text: string) => boolean;
 };
 
 export function ChatShell({
@@ -25,6 +26,7 @@ export function ChatShell({
 	modeLabel,
 	pendingApproval,
 	onSubmit,
+	onCommand,
 }: ChatShellProps) {
 	return (
 		<box
@@ -100,6 +102,7 @@ export function ChatShell({
 					disabled={isLoading}
 					footer={<ModeStatus modeId={modeId} modeLabel={modeLabel} />}
 					onSubmit={onSubmit}
+					onCommand={onCommand}
 				/>
 			</box>
 		</box>
