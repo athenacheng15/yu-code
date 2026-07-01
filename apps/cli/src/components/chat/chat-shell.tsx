@@ -100,6 +100,7 @@ export function ChatShell({
 					}
 					focused
 					disabled={isLoading}
+					commandPopoverPlacement="above"
 					footer={<ModeStatus modeId={modeId} modeLabel={modeLabel} />}
 					onSubmit={onSubmit}
 					onCommand={onCommand}

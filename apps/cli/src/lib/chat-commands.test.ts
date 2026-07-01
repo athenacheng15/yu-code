@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { executeChatCommand, parseChatCommand } from "./chat-commands";
+import {
+	executeChatCommand,
+	getSuggestedChatCommands,
+	parseChatCommand,
+} from "./chat-commands";
 
 describe("chat commands", () => {
 	test("recognizes supported commands", () => {
@@ -76,5 +80,22 @@ describe("chat commands", () => {
 		).toBe(false);
 
 		expect(calls).toEqual([]);
+	});
+
+	test("suggests commands from a slash-prefixed keyword", () => {
+		expect(getSuggestedChatCommands("/").map((command) => command.token)).toEqual([
+			"/exit",
+			"/new",
+		]);
+		expect(
+			getSuggestedChatCommands("/ne").map((command) => command.token),
+		).toEqual(["/new"]);
+	});
+
+	test("does not suggest commands for quoted or multi-token input", () => {
+		expect(getSuggestedChatCommands('"/new"')).toEqual([]);
+		expect(getSuggestedChatCommands("/new chat")).toEqual([]);
+		expect(getSuggestedChatCommands("please /new")).toEqual([]);
+		expect(getSuggestedChatCommands("/new ")).toEqual([]);
 	});
 });

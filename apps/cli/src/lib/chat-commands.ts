@@ -59,6 +59,32 @@ function findChatCommandByToken(token: string): KnownChatCommand | undefined {
 	return chatCommands.find((command) => command.token === token);
 }
 
+function getCommandQuery(input: string): string | undefined {
+	if (!input.startsWith("/") || /\s/.test(input) || /['"]/.test(input)) {
+		return undefined;
+	}
+
+	return input.slice(1).toLowerCase();
+}
+
+export function getSuggestedChatCommands(
+	input: string,
+): readonly KnownChatCommand[] {
+	const query = getCommandQuery(input);
+
+	if (query === undefined) {
+		return [];
+	}
+
+	return chatCommands.filter((command) => {
+		return (
+			command.name.includes(query) ||
+			command.token.toLowerCase().includes(query) ||
+			command.description.toLowerCase().includes(query)
+		);
+	});
+}
+
 export function parseChatCommand(
 	input: string,
 ): KnownChatCommandInvocation | undefined {
